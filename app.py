@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from apscheduler.triggers.cron import CronTrigger
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime, date
