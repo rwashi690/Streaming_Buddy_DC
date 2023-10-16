@@ -85,6 +85,9 @@ def addTrendingMovies():
             db.session.commit()
             print("Trending Movie Added:", getTopTrendingMovies()[x]["title"])
 
+@app.route('/')
+def hello():
+    return "hello, you have reached a non-functional page"
 
 @app.route('/getTopMoviesNow')
 def displayTopMovies():
@@ -135,5 +138,3 @@ if __name__ == '__main__':
         print("Trending Movie", x, ":", getTopTrendingMovies()[x]["title"])
     print("Current Time",datetime.utcnow())
     app.run(debug=True, use_reloader=False)
-    # while True:
-    #     schedule.run_pending()
