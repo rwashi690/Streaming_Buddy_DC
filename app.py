@@ -84,7 +84,7 @@ def addTrendingMovies():
             db.session.commit()
             print("Trending Movie Added:", getTopTrendingMovies()[x]["title"])
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def hello():
     return "hello, you have reached a non-functional page"
 
