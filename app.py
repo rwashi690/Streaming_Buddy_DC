@@ -6,7 +6,7 @@ import requests
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
-app.config["SQLALCHEMY_DATABASE_URI"] = "postgres://dlpdwqhtwljhbd:67f7bc3a5a19c84cb1aa75860c08db3651b331d70dc99b3116ebd955ccbc064a@ec2-54-211-177-159.compute-1.amazonaws.com:5432/d20858gks9a25j"
+app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://dlpdwqhtwljhbd:67f7bc3a5a19c84cb1aa75860c08db3651b331d70dc99b3116ebd955ccbc064a@ec2-54-211-177-159.compute-1.amazonaws.com:5432/d20858gks9a25j"
 db = SQLAlchemy(app)
 app.app_context().push()
 
