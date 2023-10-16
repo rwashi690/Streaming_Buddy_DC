@@ -1,11 +1,9 @@
-from typing import Sequence
-
-from flask import Flask
+from dataclasses import dataclass
+from apscheduler.triggers.cron import CronTrigger
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, date
 import requests
-import time
-import atexit
 from apscheduler.schedulers.background import BackgroundScheduler
 
 app = Flask(__name__)
@@ -14,12 +12,13 @@ db = SQLAlchemy(app)
 app.app_context().push()
 
 
+@dataclass
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(100000), nullable=False)
     popularity = db.Column(db.Float, nullable=False)
     movie_id = db.Column(db.Integer, nullable=False)
-    entered_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow())
+    entered_at = db.Column(db.DateTime, nullable=False, default=date.today())
     poster_path = db.Column(db.String(100000))
 
     def __repr__(self):
@@ -29,40 +28,112 @@ class Movie(db.Model):
         self.title = title
         self.popularity = popularity
         self.movie_id = movie_id
-        self.poster_path =poster_path
+        self.poster_path = poster_path
+
+
+@dataclass
+class TrendingMovie(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(100000), nullable=False)
+    popularity = db.Column(db.Float, nullable=False)
+    movie_id = db.Column(db.Integer, nullable=False)
+    entered_at = db.Column(db.DateTime, nullable=False, default=date.today())
+    poster_path = db.Column(db.String(100000))
+
+    def __repr__(self):
+        return f"Movie: {self.title}"
+
+    def __init__(self, title, popularity, movie_id, poster_path):
+        self.title = title
+        self.popularity = popularity
+        self.movie_id = movie_id
+        self.poster_path = poster_path
 
 
 def getTopMovies():
-    response = requests.get("https://api.themoviedb.org/3/movie/popular?language=en-US&page=1&api_key=de9c1cbc12726b5dfbdf93e65610b6dc")
-    #topTenMovies = []
-    #for x in range (0,10):
-    #    topTenMovies.append(response.json()["results"][x])
-    #return topTenMovies
+    response = requests.get(
+        "https://api.themoviedb.org/3/movie/popular?language=en-US&page=1&api_key=de9c1cbc12726b5dfbdf93e65610b6dc")
     return response.json()["results"]
 
+
+def getTopTrendingMovies():
+    response = requests.get(
+        "https://api.themoviedb.org/3/trending/movie/day?language=en-US&api_key=de9c1cbc12726b5dfbdf93e65610b6dc")
+    return response.json()["results"]
+
+
+# Adding Top Movies
 def addMovies():
     with app.app_context():
-        for x in range (0,10):
-            new_entry = Movie(title=getTopMovies()[x]["title"], popularity = getTopMovies()[x]["popularity"], movie_id=getTopMovies()[x]["id"], poster_path=getTopMovies()[x]["poster_path"])
+        for x in range(0, 10):
+            new_entry = Movie(title=getTopMovies()[x]["title"], popularity=getTopMovies()[x]["popularity"],
+                              movie_id=getTopMovies()[x]["id"], poster_path=getTopMovies()[x]["poster_path"])
             db.session.add(new_entry)
             db.session.commit()
-            print("Movie Added:",getTopMovies()[x]["title"])
+            print("Movie Added:", getTopMovies()[x]["title"])
 
-@app.route('/getTopMovies')
+
+# Add Top Trending Movies
+def addTrendingMovies():
+    with app.app_context():
+        for x in range(0, 10):
+            new_entry = TrendingMovie(title=getTopTrendingMovies()[x]["title"],
+                                      popularity=getTopTrendingMovies()[x]["popularity"],
+                                      movie_id=getTopTrendingMovies()[x]["id"],
+                                      poster_path=getTopTrendingMovies()[x]["poster_path"])
+            db.session.add(new_entry)
+            db.session.commit()
+            print("Trending Movie Added:", getTopTrendingMovies()[x]["title"])
+
+
+@app.route('/getTopMoviesNow')
 def displayTopMovies():
     return getTopMovies()
 
+
+@app.route('/getTopTrendingMoviesNow')
+def displayTopTrendingMovies():
+    return getTopTrendingMovies()
+
+@app.route('/getAllPastTopMovies')
+def displayAllPastTopMovies():
+    all_movies = Movie.query.all()
+    all_movies.reverse()
+    movie_details = []
+    for movie in all_movies:
+        movie_details.append((movie.entered_at, movie.title, movie.movie_id, movie.poster_path, movie.popularity))
+    return jsonify(movie_details)
+
+@app.route('/getAllPastTrendingMovies')
+def displayAllPastTrendingMovies():
+    all_trending_movies = TrendingMovie.query.all()
+    all_trending_movies.reverse()
+    movie_details = []
+    for movie in all_trending_movies:
+        movie_details.append((movie.entered_at, movie.title, movie.movie_id, movie.poster_path, movie.popularity))
+    return jsonify(movie_details)
+
+
 with app.app_context():
+    trendingMovies = TrendingMovie.query.all()
     movies = Movie.query.all()
     if not movies:
         addMovies()
+    if not trendingMovies:
+        addTrendingMovies()
     scheduler = BackgroundScheduler()
     scheduler.add_job(addMovies, "interval", days=1)
+    scheduler.add_job(addTrendingMovies, "interval", days=1)
     scheduler.start()
+
 
 if __name__ == '__main__':
     print("App Starting, printing top movies for today")
-    for x in range (0,10):
-       print("Movie",x,":", getTopMovies()[x]["title"])
+    for x in range(0, 10):
+        print("Movie", x, ":", getTopMovies()[x]["title"])
+    for x in range(0,10):
+        print("Trending Movie", x, ":", getTopTrendingMovies()[x]["title"])
+    print("Current Time",datetime.utcnow())
     app.run(debug=True, use_reloader=False)
-
+    # while True:
+    #     schedule.run_pending()
