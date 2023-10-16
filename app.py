@@ -122,8 +122,8 @@ with app.app_context():
     if not trendingMovies:
         addTrendingMovies()
     scheduler = BackgroundScheduler()
-    scheduler.add_job(addMovies, "interval", days=1)
-    scheduler.add_job(addTrendingMovies, "interval", days=1)
+    scheduler.add_job(addMovies, "interval", hours=3)
+    scheduler.add_job(addTrendingMovies, "interval", hours=3)
     scheduler.start()
 
 
