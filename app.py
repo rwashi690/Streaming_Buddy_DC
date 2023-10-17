@@ -124,8 +124,8 @@ with app.app_context():
     if not trendingMovies:
         addTrendingMovies()
     scheduler = BackgroundScheduler(daemon=True)
-    scheduler.add_job(addMovies, "interval", days=1)
-    scheduler.add_job(addTrendingMovies, "interval", days=1)
+    scheduler.add_job(addMovies, "interval", minutes=1)
+    scheduler.add_job(addTrendingMovies, "interval", minutes=1)
     #scheduler.add_job(addMovies, "interval", hours=3)
     #scheduler.add_job(addTrendingMovies, "interval", hours=3)
     scheduler.start()
@@ -138,4 +138,4 @@ if __name__ == '__main__':
     for x in range(0,10):
         print("Trending Movie", x, ":", getTopTrendingMovies()[x]["title"])
     print("Current Time",datetime.utcnow())
-    app.run(debug=True, use_reloader=False)
+    app.run(use_reloader=False, debug=False)
